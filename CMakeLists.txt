@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.12)
+
+if(MSVC)
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/execution_charset:utf-8>")
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source_charset:utf-8>")
+endif()
+
+if(WIN32)
+    if(MSVC)
+        set(VCPKG_TARGET_TRIPLET x64-windows)
+    else()
+        set(VCPKG_TARGET_TRIPLET x64-mingw-dynamic)
+    endif()
+else()
+    set(VCPKG_TARGET_TRIPLET x64-linux)
+endif()
+
+set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+project(ThaumicIndustrial)
+set(CMAKE_CXX_STANDARD 23)
+include_directories(${CMAKE_SOURCE_DIR}/include)
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+add_executable(ThaumicIndustrial ${SOURCES})
+
+if(MINGW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++exp)
+endif()
+
+find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
+target_link_libraries(ThaumicIndustrial PRIVATE SDL3::SDL3)
+target_link_libraries(ThaumicIndustrial PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>)

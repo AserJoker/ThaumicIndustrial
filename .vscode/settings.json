@@ -1,0 +1,7 @@
+{
+    "cmake.configureArgs": [],
+    "cmake.debugConfig": {
+        "cwd": "${workspaceFolder}",
+        "args": ["--log_priority=debug"]
+    },
+}
