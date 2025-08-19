@@ -1,6 +1,7 @@
 #pragma once
-#include "SDL3/SDL_video.h"
+#include "AssetManager.hpp"
 #include "core/Object.hpp"
+#include "render/RenderSystem.hpp"
 #include <SDL3/SDL.h>
 #include <memory>
 #include <unordered_map>
@@ -11,18 +12,31 @@ private:
 
 private:
   std::unordered_map<std::string, std::string> _options;
+  std::unordered_map<int, std::string> _logCategoryNames;
   SDL_Window *_window = nullptr;
   SDL_Renderer *_renderer = nullptr;
+  AssetManager *_assetManager = nullptr;
+  RenderSystem *_renderSystem = nullptr;
   bool _running = true;
   std::string _cwd;
 
 private:
+  static void logOutput(void *userdata, int category, SDL_LogPriority priority,
+                        const char *message);
+
+private:
   void resolveOptions(int argc, char **argv);
   void initLog();
-  bool createWindowAndRenderer();
+  bool createWindow();
+  bool createRenderer();
+  bool initAssetManager();
+  bool initRenderSystem();
   void cleanup();
   bool processEvent();
+
+private:
   void onUpdate();
+  void onWindowClose();
 
 public:
   int run(int argc, char **argv);
@@ -31,8 +45,9 @@ public:
   ~Application() override;
   void exit();
   inline SDL_Window *getWindow() const { return _window; }
-  inline SDL_Renderer *getRenderer() const { return _renderer; }
   const std::string &getCWD() const { return _cwd; }
+  inline RenderSystem *getRenderSystem() const { return _renderSystem; }
+  inline AssetManager *getAssetManager() const { return _assetManager; }
 
 public:
   static Application &getInstance() {

@@ -1,15 +1,24 @@
 #include "runtime/Application.hpp"
-#include "SDL3/SDL_render.h"
+#include "core/ScopeGuard.hpp"
 #include "render/RenderSystem.hpp"
+#include "runtime/AssetManager.hpp"
+#include "runtime/ImageLoader.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_log.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3_image/SDL_image.h>
 #include <chrono>
+#include <exception>
+#include <memory>
 #include <print>
 #include <string>
+#include <unordered_map>
 
-static void LogOutput(void *userdata, int category, SDL_LogPriority priority,
-                      const char *message) {
+void Application::logOutput(void *userdata, int category,
+                            SDL_LogPriority priority, const char *message) {
   std::string kind;
   switch (priority) {
   case SDL_LOG_PRIORITY_INVALID:
@@ -43,41 +52,11 @@ static void LogOutput(void *userdata, int category, SDL_LogPriority priority,
     kind = "Unknown";
     break;
   }
-  std::string categoryName;
-  switch (category) {
-  case SDL_LOG_CATEGORY_APPLICATION:
-    categoryName = "Application";
-    break;
-  case SDL_LOG_CATEGORY_ERROR:
-    categoryName = "Error";
-    break;
-  case SDL_LOG_CATEGORY_ASSERT:
-    categoryName = "Assert";
-    break;
-  case SDL_LOG_CATEGORY_SYSTEM:
-    categoryName = "System";
-    break;
-  case SDL_LOG_CATEGORY_AUDIO:
-    categoryName = "Audio";
-    break;
-  case SDL_LOG_CATEGORY_VIDEO:
-    categoryName = "Video";
-    break;
-  case SDL_LOG_CATEGORY_RENDER:
-    categoryName = "Render";
-    break;
-  case SDL_LOG_CATEGORY_INPUT:
-    categoryName = "Input";
-    break;
-  case SDL_LOG_CATEGORY_TEST:
-    categoryName = "Test";
-    break;
-  case SDL_LOG_CATEGORY_GPU:
-    categoryName = "GPU";
-    break;
-  default:
-    categoryName = "Unknown";
-    break;
+  std::string categoryName = "Unkown";
+
+  auto &app = Application::getInstance();
+  if (app._logCategoryNames.contains(category)) {
+    categoryName = app._logCategoryNames.at(category);
   }
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
@@ -91,12 +70,6 @@ static void LogOutput(void *userdata, int category, SDL_LogPriority priority,
 std::unique_ptr<Application> Application::_instance = nullptr;
 
 void Application::resolveOptions(int argc, char **argv) {
-  _cwd = SDL_GetBasePath();
-  if (_cwd.empty()) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Could not get base path: %s",
-                 SDL_GetError());
-    return;
-  }
   int index = 1;
   while (index < argc) {
     std::string arg = argv[index];
@@ -126,7 +99,7 @@ void Application::resolveOptions(int argc, char **argv) {
   }
 }
 void Application::initLog() {
-  SDL_SetLogOutputFunction(LogOutput, nullptr);
+  SDL_SetLogOutputFunction(logOutput, nullptr);
   auto &logPriorities = getOption("log_priority", "info");
   if (logPriorities == "trace") {
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_TRACE);
@@ -146,8 +119,18 @@ void Application::initLog() {
     SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unknown log priority: %s",
                 logPriorities.c_str());
   }
+  _logCategoryNames[SDL_LOG_CATEGORY_APPLICATION] = "Application";
+  _logCategoryNames[SDL_LOG_CATEGORY_ERROR] = "Error";
+  _logCategoryNames[SDL_LOG_CATEGORY_ASSERT] = "Assert";
+  _logCategoryNames[SDL_LOG_CATEGORY_SYSTEM] = "System";
+  _logCategoryNames[SDL_LOG_CATEGORY_AUDIO] = "Audio";
+  _logCategoryNames[SDL_LOG_CATEGORY_VIDEO] = "Video";
+  _logCategoryNames[SDL_LOG_CATEGORY_RENDER] = "Render";
+  _logCategoryNames[SDL_LOG_CATEGORY_INPUT] = "Input";
+  _logCategoryNames[SDL_LOG_CATEGORY_TEST] = "Test";
+  _logCategoryNames[SDL_LOG_CATEGORY_GPU] = "GPU";
 }
-bool Application::createWindowAndRenderer() {
+bool Application::createWindow() {
   _window =
       SDL_CreateWindow("Thaumic Industrial", 1024, 768, SDL_WINDOW_RESIZABLE);
   if (!_window) {
@@ -155,19 +138,61 @@ bool Application::createWindowAndRenderer() {
                  SDL_GetError());
     return false;
   }
-  _renderer = SDL_CreateRenderer(_window, nullptr);
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window created successfully");
+  return true;
+}
+bool Application::createRenderer() {
+  _renderer = SDL_CreateRenderer(_window, NULL);
   if (!_renderer) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Could not create renderer: %s",
                  SDL_GetError());
     return false;
   }
-  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window created successfully");
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Renderer created successfully");
   return true;
+}
+bool Application::initAssetManager() {
+  try {
+    auto imgLoader = std::make_shared<ImageLoader>();
+    _assetManager = new AssetManager();
+    _assetManager->registerLoader("png", imgLoader);
+    _assetManager->registerLoader("bmp", imgLoader);
+    _assetManager->registerLoader("jpeg", imgLoader);
+    _assetManager->registerLoader("jpg", imgLoader);
+    return true;
+  } catch (std::exception &e) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                 "Failed to create asset manager: %s", e.what());
+  } catch (...) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                 "Failed to create asset manager: unknown exception");
+  }
+  return false;
+}
+
+bool Application::initRenderSystem() {
+  try {
+    _renderSystem = new RenderSystem(_renderer);
+    return true;
+  } catch (std::exception &e) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                 "Failed to create render system: %s", e.what());
+  } catch (...) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                 "Failed to create render system: unknown exception");
+  }
+  return false;
 }
 
 void Application::cleanup() {
-
-  RendererSystem::getInstance().clearLayers();
+  if (_renderSystem) {
+    delete _renderSystem;
+    _renderSystem = nullptr;
+  }
+  if (_assetManager) {
+    delete _assetManager;
+    _assetManager = nullptr;
+  }
   if (_renderer) {
     SDL_DestroyRenderer(_renderer);
     _renderer = nullptr;
@@ -176,30 +201,36 @@ void Application::cleanup() {
     SDL_DestroyWindow(_window);
     _window = nullptr;
   }
-  SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Application cleaned up");
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Application cleaned up");
   SDL_Quit();
+}
+void Application::onWindowClose() {
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+               "Window close requested, exiting loop");
+  _running = false;
 }
 bool Application::processEvent() {
   SDL_Event event;
   if (SDL_PollEvent(&event)) {
     switch (event.type) {
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-      SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
-                   "Window close requested, exiting loop");
-      _running = false;
-      return true;
+      onWindowClose();
+      break;
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      break;
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+      break;
     default:
       break;
     }
+    return true;
   }
   return false;
 }
 
 void Application::onUpdate() {
   if (!processEvent()) {
-    SDL_RenderClear(_renderer);
-    RendererSystem::getInstance().draw(_renderer);
-    SDL_RenderPresent(_renderer);
+    _renderSystem->present();
   }
 }
 
@@ -212,7 +243,7 @@ const std::string &Application::getOption(const std::string &key,
   return def;
 }
 
-Application::~Application() { cleanup(); }
+Application::~Application() {}
 
 void Application::exit() {
   _running = false;
@@ -220,12 +251,19 @@ void Application::exit() {
 }
 
 int Application::run(int argc, char **argv) {
+  DEFER([this] { cleanup(); });
   resolveOptions(argc, argv);
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_Log("Could not initialize SDL: %s", SDL_GetError());
     return -1;
   }
   initLog();
+  _cwd = SDL_GetBasePath();
+  if (_cwd.empty()) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Could not get base path: %s",
+                 SDL_GetError());
+    return -1;
+  }
   SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Application running with CWD: %s",
               _cwd.c_str());
   SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
@@ -234,8 +272,21 @@ int Application::run(int argc, char **argv) {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Option: %s = %s",
                  option.c_str(), value.c_str());
   }
-  if (!createWindowAndRenderer()) {
+  if (!initAssetManager()) {
     return -1;
+  }
+  if (!createWindow()) {
+    return -1;
+  }
+  if (!createRenderer()) {
+    return -1;
+  }
+  if (!initRenderSystem()) {
+    return -1;
+  }
+  if (!_assetManager->initStore(_cwd + "assets")) {
+    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
+                 "Failed to load asset store: %sassets", _cwd.c_str());
   }
   while (_running) {
     onUpdate();

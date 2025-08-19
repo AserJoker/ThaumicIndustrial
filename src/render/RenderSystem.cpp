@@ -1,40 +1,43 @@
 #include "render/RenderSystem.hpp"
-std::unique_ptr<RendererSystem> RendererSystem::_instance = nullptr;
-Layer *RendererSystem::getLayer(int32_t zIndex) {
-  auto it = _layers.find(zIndex);
-  if (it != _layers.end()) {
-    return it->second.get();
-  }
-  auto layer = std::make_unique<Layer>();
-  layer->setZIndex(zIndex);
-  Layer *layerPtr = layer.get();
-  _layers[zIndex] = std::move(layer);
-  SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Created new layer with zIndex: %d",
-               zIndex);
-  return layerPtr;
+#include "render/Image.hpp"
+#include "render/RenderTarget.hpp"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_render.h>
+#include <cstddef>
+#include <memory>
+RenderSystem::RenderSystem(SDL_Renderer *renderer) : _renderer(renderer) {
+  SDL_SetRenderDrawColorFloat(_renderer, 0.2, 0.3, 0.3, 1.0);
+  _renderTarget = std::make_unique<RenderTarget>();
 }
-bool RendererSystem::removeLayer(int32_t zIndex) {
-  auto it = _layers.find(zIndex);
-  if (it != _layers.end()) {
-    _layers.erase(it);
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Removed layer with zIndex: %d",
-                 zIndex);
-    return true;
-  }
-  return false;
-}
-bool RendererSystem::hasLayer(int32_t zIndex) const {
-  return _layers.find(zIndex) != _layers.end();
-}
-void RendererSystem::clearLayers() {
-  _layers.clear();
-  SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Cleared all layers");
-}
-void RendererSystem::draw(SDL_Renderer *renderer) const {
-  if (!renderer) {
+
+void RenderSystem::present() {
+  if (!_renderer) {
     return;
   }
-  for (const auto &[_, layer] : _layers) {
-    layer->draw(renderer);
+  SDL_RenderClear(_renderer);
+  _renderTarget->draw(_renderer);
+  SDL_RenderPresent(_renderer);
+}
+Image *RenderSystem::createImage(size_t width, size_t height,
+                                 SDL_PixelFormat format,
+                                 SDL_TextureAccess access) {
+  SDL_Texture *texture =
+      SDL_CreateTexture(_renderer, format, access, width, height);
+  if (!texture) {
+    SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to create texture: %s",
+                 SDL_GetError());
+    return nullptr;
   }
+  return new Image(texture);
+}
+
+Image *RenderSystem::createImage(SDL_Surface *surface) {
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
+  if (!texture) {
+    SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to create texture: %s",
+                 SDL_GetError());
+    return nullptr;
+  }
+  return new Image(texture);
 }

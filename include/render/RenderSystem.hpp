@@ -1,32 +1,24 @@
 #pragma once
+#include "Image.hpp"
 #include "core/Object.hpp"
-#include "render/Layer.hpp"
-#include <cstdint>
+#include "render/RenderTarget.hpp"
+#include <SDL3/SDL.h>
 #include <memory>
-#include <unordered_map>
-class RendererSystem : public Object {
+class RenderSystem : public Object {
 private:
-  static std::unique_ptr<RendererSystem> _instance;
+  SDL_Renderer *_renderer = {};
+  std::unique_ptr<RenderTarget> _renderTarget;
 
 public:
-  static RendererSystem &getInstance() {
-    if (!_instance) {
-      _instance = std::make_unique<RendererSystem>();
-    }
-    return *_instance;
-  }
+  RenderSystem(SDL_Renderer *renderer);
 
-private:
-  std::unordered_map<int32_t, std::unique_ptr<Layer>> _layers;
+  void present();
 
-public:
-  Layer *getLayer(int32_t zIndex = 0);
-  bool removeLayer(int32_t zIndex);
-  bool hasLayer(int32_t zIndex) const;
-  void clearLayers();
-  void draw(SDL_Renderer *renderer) const;
-  inline const std::unordered_map<int32_t, std::unique_ptr<Layer>> &
-  getLayers() const {
-    return _layers;
-  }
+  inline RenderTarget *getRenderTarget() const { return _renderTarget.get(); }
+
+  Image *createImage(size_t width, size_t height,
+                     SDL_PixelFormat format = SDL_PIXELFORMAT_RGBA32,
+                     SDL_TextureAccess access = SDL_TEXTUREACCESS_STATIC);
+
+  Image *createImage(SDL_Surface *surface);
 };

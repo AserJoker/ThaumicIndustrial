@@ -2,5 +2,5 @@
 class Object {
 public:
   Object() = default;
-  virtual ~Object() = default;
+  virtual ~Object() noexcept = default;
 };
