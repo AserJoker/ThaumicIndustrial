@@ -8,8 +8,8 @@ std::shared_ptr<Object> ImageLoader::load(const std::string &path) {
   if (!surface) {
     return nullptr;
   }
-  auto &app = Application::getInstance();
-  auto img = app.getRenderSystem()->createImage(surface);
+  auto app = Application::getInstance();
+  auto img = app->getRenderSystem()->createImage(surface);
   SDL_DestroySurface(surface);
   return std::shared_ptr<Object>(img);
 }

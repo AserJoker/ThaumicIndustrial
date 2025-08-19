@@ -1,5 +1,6 @@
 #pragma once
 #include "AssetManager.hpp"
+#include "Locale.hpp"
 #include "core/Object.hpp"
 #include "render/RenderSystem.hpp"
 #include <SDL3/SDL.h>
@@ -7,6 +8,9 @@
 #include <unordered_map>
 
 class Application : public Object {
+public:
+  static inline const std::string APP_NAME = "thaumicindustrial";
+
 private:
   static std::unique_ptr<Application> _instance;
 
@@ -17,6 +21,7 @@ private:
   SDL_Renderer *_renderer = nullptr;
   AssetManager *_assetManager = nullptr;
   RenderSystem *_renderSystem = nullptr;
+  Locale *_locale = nullptr;
   bool _running = true;
   std::string _cwd;
 
@@ -31,6 +36,7 @@ private:
   bool createRenderer();
   bool initAssetManager();
   bool initRenderSystem();
+  bool initLocale();
   void cleanup();
   bool processEvent();
 
@@ -48,12 +54,13 @@ public:
   const std::string &getCWD() const { return _cwd; }
   inline RenderSystem *getRenderSystem() const { return _renderSystem; }
   inline AssetManager *getAssetManager() const { return _assetManager; }
+  inline Locale *getLocale() const { return _locale; }
 
 public:
-  static Application &getInstance() {
+  static Application *getInstance() {
     if (!_instance) {
       _instance = std::make_unique<Application>();
     }
-    return *_instance;
+    return _instance.get();
   }
 };

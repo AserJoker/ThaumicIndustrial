@@ -6,6 +6,6 @@ auto main(int argc, char *argv[]) -> int {
 #ifdef __WIN32__
   SetConsoleOutputCP(CP_UTF8);
 #endif
-  auto &app = Application::getInstance();
-  return app.run(argc, argv);
+  auto app = Application::getInstance();
+  return app->run(argc, argv);
 };

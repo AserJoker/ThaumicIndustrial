@@ -3,6 +3,7 @@
 #include "render/RenderSystem.hpp"
 #include "runtime/AssetManager.hpp"
 #include "runtime/ImageLoader.hpp"
+#include "runtime/Locale.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
@@ -54,9 +55,9 @@ void Application::logOutput(void *userdata, int category,
   }
   std::string categoryName = "Unkown";
 
-  auto &app = Application::getInstance();
-  if (app._logCategoryNames.contains(category)) {
-    categoryName = app._logCategoryNames.at(category);
+  auto app = Application::getInstance();
+  if (app->_logCategoryNames.contains(category)) {
+    categoryName = app->_logCategoryNames.at(category);
   }
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
@@ -183,8 +184,27 @@ bool Application::initRenderSystem() {
   }
   return false;
 }
+bool Application::initLocale() {
+  try {
+    _locale = new Locale();
+    _locale->setDefaultLang("en_US");
+    _locale->setLang("en_US");
+    return true;
+  } catch (std::exception &e) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create locale: %s",
+                 e.what());
+  } catch (...) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                 "Failed to create locale: unknown exception");
+  }
+  return false;
+}
 
 void Application::cleanup() {
+  if (_locale) {
+    delete _locale;
+    _locale = nullptr;
+  }
   if (_renderSystem) {
     delete _renderSystem;
     _renderSystem = nullptr;
@@ -288,6 +308,11 @@ int Application::run(int argc, char **argv) {
     SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
                  "Failed to load asset store: %sassets", _cwd.c_str());
   }
+  if (!initLocale()) {
+    return -1;
+  }
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Language name: %s",
+               _locale->i18n("lang.en_US.name").c_str());
   while (_running) {
     onUpdate();
   }
