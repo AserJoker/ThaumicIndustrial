@@ -23,22 +23,19 @@ private:
     std::string name;
   };
 
+private:
   static bool resolve(const std::string &source, Identity &output);
 
 public:
   bool initStore(const std::string &path);
-
   void registerLoader(const std::string &type,
                       const std::shared_ptr<AssetLoader> &loader);
-
   bool store(const std::string &type, const std::vector<std::string> &ns,
              const std::string &name, const std::shared_ptr<Object> asset);
-
   bool store(const std::string &fullname, const std::shared_ptr<Object> asset);
-
   const std::shared_ptr<Object> &query(const std::string &type,
                                        const std::vector<std::string> &ns,
                                        const std::string &name) const;
-
   const std::shared_ptr<Object> &query(const std::string &fullname) const;
+  void reset();
 };

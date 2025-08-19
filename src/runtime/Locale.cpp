@@ -91,6 +91,20 @@ const std::string &Locale::i18n(const std::string &key) const {
   }
   return key;
 }
+
+void Locale::addLanguage(const std::string &key, const std::string &name) {
+  _languages[key] = name;
+}
+void Locale::removeLanguage(const std::string &key) { _languages.erase(key); }
+bool Locale::hasLanguage(const std::string &key) const {
+  return _languages.contains(key);
+}
+const std::string &Locale::getLanguageName(const std::string &key) const {
+  if (_languages.contains(key)) {
+    return _languages.at(key);
+  }
+  return key;
+}
 void Locale::reset() {
   _locales.clear();
   _defaultLocales.clear();

@@ -8,6 +8,7 @@ private:
   std::unordered_map<std::string, std::string> _defaultLocales;
   std::string _lang;
   std::string _defaultLang;
+  std::unordered_map<std::string, std::string> _languages;
 
 private:
   static void resolve(std::unordered_map<std::string, std::string> &locale,
@@ -19,5 +20,9 @@ public:
   inline const std::string &getLang() const { return _lang; };
   inline const std::string &getDefaultLang() const { return _defaultLang; }
   const std::string &i18n(const std::string &key) const;
+  void addLanguage(const std::string &key, const std::string &name);
+  void removeLanguage(const std::string &key);
+  bool hasLanguage(const std::string &key) const;
+  const std::string &getLanguageName(const std::string &key) const;
   void reset();
 };

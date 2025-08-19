@@ -144,3 +144,4 @@ AssetManager::query(const std::string &fullname) const {
   }
   return query(id.type, id.ns, id.name);
 }
+void AssetManager::reset() { _assets.clear(); }
