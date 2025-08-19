@@ -187,6 +187,8 @@ bool Application::initRenderSystem() {
 bool Application::initLocale() {
   try {
     _locale = new Locale();
+    _locale->addLanguage("en_US", "English (US)");
+    _locale->addLanguage("zh_CN", "简体中文");
     _locale->setDefaultLang("en_US");
     _locale->setLang("en_US");
     return true;
@@ -247,12 +249,21 @@ bool Application::processEvent() {
   }
   return false;
 }
-
+void Application::onPreInitialize() {}
+void Application::onInitialize() {
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Support languages:");
+  for (auto &[key, name] : _locale->getLanguages()) {
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  key: %s, name: %s",
+                 key.c_str(), name.c_str());
+  }
+}
+void Application::onPostInitialize() {}
 void Application::onUpdate() {
   if (!processEvent()) {
     _renderSystem->present();
   }
 }
+void Application::onUninitialize() {}
 
 const std::string &Application::getOption(const std::string &key,
                                           const std::string &def) const {
@@ -311,10 +322,12 @@ int Application::run(int argc, char **argv) {
   if (!initLocale()) {
     return -1;
   }
-  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Language name: %s",
-               _locale->i18n("lang.en_US.name").c_str());
+  onPreInitialize();
+  onInitialize();
+  onPostInitialize();
   while (_running) {
     onUpdate();
   }
+  onUninitialize();
   return 0;
 }

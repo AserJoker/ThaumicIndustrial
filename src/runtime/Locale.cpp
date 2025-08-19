@@ -105,6 +105,10 @@ const std::string &Locale::getLanguageName(const std::string &key) const {
   }
   return key;
 }
+const std::unordered_map<std::string, std::string> &
+Locale::getLanguages() const {
+  return _languages;
+}
 void Locale::reset() {
   _locales.clear();
   _defaultLocales.clear();

@@ -24,5 +24,6 @@ public:
   void removeLanguage(const std::string &key);
   bool hasLanguage(const std::string &key) const;
   const std::string &getLanguageName(const std::string &key) const;
+  const std::unordered_map<std::string, std::string> &getLanguages() const;
   void reset();
 };

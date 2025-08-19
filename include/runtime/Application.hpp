@@ -41,8 +41,12 @@ private:
   bool processEvent();
 
 private:
+  void onPreInitialize();
+  void onInitialize();
+  void onPostInitialize();
   void onUpdate();
   void onWindowClose();
+  void onUninitialize();
 
 public:
   int run(int argc, char **argv);
