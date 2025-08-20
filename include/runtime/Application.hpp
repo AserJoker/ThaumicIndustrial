@@ -18,7 +18,6 @@ private:
   std::unordered_map<std::string, std::string> _options;
   std::unordered_map<int, std::string> _logCategoryNames;
   SDL_Window *_window = nullptr;
-  SDL_Renderer *_renderer = nullptr;
   AssetManager *_assetManager = nullptr;
   RenderSystem *_renderSystem = nullptr;
   Locale *_locale = nullptr;
@@ -33,7 +32,6 @@ private:
   void resolveOptions(int argc, char **argv);
   void initLog();
   bool createWindow();
-  bool createRenderer();
   bool initAssetManager();
   bool initRenderSystem();
   bool initLocale();

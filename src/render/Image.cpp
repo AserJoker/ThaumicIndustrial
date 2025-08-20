@@ -1,5 +1,6 @@
 #include "render/Image.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_render.h>
 Image::Image(SDL_Texture *texture) : _texture(texture) {}
 

@@ -29,5 +29,7 @@ endif()
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
+find_package(SDL3_ttf CONFIG REQUIRED)
 target_link_libraries(ThaumicIndustrial PRIVATE SDL3::SDL3)
 target_link_libraries(ThaumicIndustrial PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>)
+target_link_libraries(ThaumicIndustrial PRIVATE SDL3_ttf::SDL3_ttf)

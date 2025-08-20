@@ -11,14 +11,16 @@ private:
 
 public:
   RenderSystem(SDL_Renderer *renderer);
+  ~RenderSystem() override;
 
   void present();
 
   inline RenderTarget *getRenderTarget() const { return _renderTarget.get(); }
 
-  Image *createImage(size_t width, size_t height,
-                     SDL_PixelFormat format = SDL_PIXELFORMAT_RGBA32,
-                     SDL_TextureAccess access = SDL_TEXTUREACCESS_STATIC);
+  std::shared_ptr<Image>
+  createImage(size_t width, size_t height,
+              SDL_PixelFormat format = SDL_PIXELFORMAT_RGBA32,
+              SDL_TextureAccess access = SDL_TEXTUREACCESS_STATIC);
 
-  Image *createImage(SDL_Surface *surface);
+  std::shared_ptr<Image> createImage(SDL_Surface *surface);
 };

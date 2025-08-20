@@ -10,18 +10,23 @@ RenderSystem::RenderSystem(SDL_Renderer *renderer) : _renderer(renderer) {
   SDL_SetRenderDrawColorFloat(_renderer, 0.2, 0.3, 0.3, 1.0);
   _renderTarget = std::make_unique<RenderTarget>();
 }
+RenderSystem::~RenderSystem() {
+  if (_renderer) {
+    SDL_DestroyRenderer(_renderer);
+    _renderer = nullptr;
+  }
+}
 
 void RenderSystem::present() {
   if (!_renderer) {
     return;
   }
-  SDL_RenderClear(_renderer);
   _renderTarget->draw(_renderer);
   SDL_RenderPresent(_renderer);
 }
-Image *RenderSystem::createImage(size_t width, size_t height,
-                                 SDL_PixelFormat format,
-                                 SDL_TextureAccess access) {
+std::shared_ptr<Image> RenderSystem::createImage(size_t width, size_t height,
+                                                 SDL_PixelFormat format,
+                                                 SDL_TextureAccess access) {
   SDL_Texture *texture =
       SDL_CreateTexture(_renderer, format, access, width, height);
   if (!texture) {
@@ -29,15 +34,15 @@ Image *RenderSystem::createImage(size_t width, size_t height,
                  SDL_GetError());
     return nullptr;
   }
-  return new Image(texture);
+  return std::make_shared<Image>(texture);
 }
 
-Image *RenderSystem::createImage(SDL_Surface *surface) {
+std::shared_ptr<Image> RenderSystem::createImage(SDL_Surface *surface) {
   SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
   if (!texture) {
     SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to create texture: %s",
                  SDL_GetError());
     return nullptr;
   }
-  return new Image(texture);
+  return std::make_shared<Image>(texture);
 }

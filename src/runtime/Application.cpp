@@ -5,12 +5,11 @@
 #include "runtime/ImageLoader.hpp"
 #include "runtime/Locale.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_log.h>
+#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_render.h>
-#include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <chrono>
 #include <exception>
 #include <memory>
@@ -142,16 +141,6 @@ bool Application::createWindow() {
   SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window created successfully");
   return true;
 }
-bool Application::createRenderer() {
-  _renderer = SDL_CreateRenderer(_window, NULL);
-  if (!_renderer) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Could not create renderer: %s",
-                 SDL_GetError());
-    return false;
-  }
-  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Renderer created successfully");
-  return true;
-}
 bool Application::initAssetManager() {
   try {
     auto imgLoader = std::make_shared<ImageLoader>();
@@ -173,7 +162,16 @@ bool Application::initAssetManager() {
 
 bool Application::initRenderSystem() {
   try {
-    _renderSystem = new RenderSystem(_renderer);
+    SDL_Renderer *renderer = SDL_CreateRenderer(_window, NULL);
+    if (!renderer) {
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                   "Failed to create renderer: %s", SDL_GetError());
+      return false;
+    }
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+                 "Create renderer successful with device: %s",
+                 SDL_GetRendererName(renderer));
+    _renderSystem = new RenderSystem(renderer);
     return true;
   } catch (std::exception &e) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -207,22 +205,19 @@ void Application::cleanup() {
     delete _locale;
     _locale = nullptr;
   }
-  if (_renderSystem) {
-    delete _renderSystem;
-    _renderSystem = nullptr;
-  }
   if (_assetManager) {
     delete _assetManager;
     _assetManager = nullptr;
   }
-  if (_renderer) {
-    SDL_DestroyRenderer(_renderer);
-    _renderer = nullptr;
+  if (_renderSystem) {
+    delete _renderSystem;
+    _renderSystem = nullptr;
   }
   if (_window) {
     SDL_DestroyWindow(_window);
     _window = nullptr;
   }
+  TTF_Quit();
   SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Application cleaned up");
   SDL_Quit();
 }
@@ -289,6 +284,10 @@ int Application::run(int argc, char **argv) {
     return -1;
   }
   initLog();
+  if (!TTF_Init()) {
+    SDL_Log("Could not initialize TTF: %s", SDL_GetError());
+    return -1;
+  }
   _cwd = SDL_GetBasePath();
   if (_cwd.empty()) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Could not get base path: %s",
@@ -307,9 +306,6 @@ int Application::run(int argc, char **argv) {
     return -1;
   }
   if (!createWindow()) {
-    return -1;
-  }
-  if (!createRenderer()) {
     return -1;
   }
   if (!initRenderSystem()) {
