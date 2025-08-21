@@ -7,6 +7,8 @@
 #include "runtime/Logger.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <exception>
@@ -87,7 +89,7 @@ bool Application::initRenderSystem() {
       return false;
     }
     _logger->debug("Create renderer successful with device: {}",
-                  SDL_GetRendererName(renderer));
+                   SDL_GetRendererName(renderer));
     _renderSystem = new RenderSystem(renderer);
     return true;
   } catch (std::exception &e) {
@@ -134,20 +136,45 @@ void Application::cleanup() {
   _logger->debug("Application cleaned up");
   SDL_Quit();
 }
-void Application::onWindowClose() {
+void Application::onWindowClose(const SDL_WindowEvent &event) {
   _logger->debug("Window close requested, exiting loop");
   _running = false;
 }
+void Application::onWindowResize(const SDL_WindowEvent &event) {}
+void Application::onWindowFocusGained(const SDL_WindowEvent &event) {}
+void Application::onWindowFocusLost(const SDL_WindowEvent &event) {}
+void Application::onMouseButtonDown(const SDL_MouseButtonEvent &event) {}
+void Application::onMouseButtonUp(const SDL_MouseButtonEvent &event) {}
+void Application::onKeyDown(const SDL_KeyboardEvent &event) {}
+void Application::onKeyUp(const SDL_KeyboardEvent &event) {}
+
 bool Application::processEvent() {
   SDL_Event event;
   if (SDL_PollEvent(&event)) {
     switch (event.type) {
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-      onWindowClose();
+      onWindowClose(event.window);
+      break;
+    case SDL_EVENT_WINDOW_RESIZED:
+      onWindowResize(event.window);
+      break;
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+      onWindowFocusGained(event.window);
+      break;
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+      onWindowFocusLost(event.window);
       break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      onMouseButtonDown(event.button);
       break;
     case SDL_EVENT_MOUSE_BUTTON_UP:
+      onMouseButtonUp(event.button);
+      break;
+    case SDL_EVENT_KEY_DOWN:
+      onKeyDown(event.key);
+      break;
+    case SDL_EVENT_KEY_UP:
+      onKeyUp(event.key);
       break;
     default:
       break;

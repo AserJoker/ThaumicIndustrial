@@ -5,6 +5,7 @@
 #include "render/RenderSystem.hpp"
 #include "runtime/Logger.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
 #include <memory>
 #include <unordered_map>
 
@@ -41,8 +42,15 @@ private:
   void onInitialize();
   void onPostInitialize();
   void onUpdate();
-  void onWindowClose();
   void onUninitialize();
+  void onWindowClose(const SDL_WindowEvent &event);
+  void onWindowResize(const SDL_WindowEvent &event);
+  void onWindowFocusGained(const SDL_WindowEvent &event);
+  void onWindowFocusLost(const SDL_WindowEvent &event);
+  void onMouseButtonDown(const SDL_MouseButtonEvent &event);
+  void onMouseButtonUp(const SDL_MouseButtonEvent &event);
+  void onKeyDown(const SDL_KeyboardEvent &event);
+  void onKeyUp(const SDL_KeyboardEvent &event);
 
 public:
   int run(int argc, char **argv);
