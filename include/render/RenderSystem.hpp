@@ -2,12 +2,14 @@
 #include "Image.hpp"
 #include "core/Object.hpp"
 #include "render/RenderTarget.hpp"
+#include "runtime/Logger.hpp"
 #include <SDL3/SDL.h>
 #include <memory>
 class RenderSystem : public Object {
 private:
   SDL_Renderer *_renderer = {};
   std::unique_ptr<RenderTarget> _renderTarget;
+  Logger *_logger = Logger::getLogger("Render");
 
 public:
   RenderSystem(SDL_Renderer *renderer);

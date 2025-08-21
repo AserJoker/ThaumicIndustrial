@@ -3,6 +3,7 @@
 #include "Locale.hpp"
 #include "core/Object.hpp"
 #include "render/RenderSystem.hpp"
+#include "runtime/Logger.hpp"
 #include <SDL3/SDL.h>
 #include <memory>
 #include <unordered_map>
@@ -23,10 +24,7 @@ private:
   Locale *_locale = nullptr;
   bool _running = true;
   std::string _cwd;
-
-private:
-  static void logOutput(void *userdata, int category, SDL_LogPriority priority,
-                        const char *message);
+  Logger *_logger = Logger::getLogger("Application");
 
 private:
   void resolveOptions(int argc, char **argv);
