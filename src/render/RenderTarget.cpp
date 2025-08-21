@@ -14,8 +14,7 @@ void RenderTarget::draw(SDL_Renderer *renderer, SDL_Texture *texture) {
   SDL_Color current;
   if (texture) {
     if (!SDL_SetRenderTarget(renderer, texture)) {
-      SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to set render target: %s",
-                   SDL_GetError());
+      _logger->error("Failed to set render target: {}", SDL_GetError());
       return;
     }
     SDL_GetRenderDrawColor(renderer, &current.r, &current.g, &current.b,

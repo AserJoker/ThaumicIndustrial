@@ -44,8 +44,7 @@ void Locale::resolve(std::unordered_map<std::string, std::string> &locales,
       }
       locales[key] = value;
     } else {
-      SDL_LogWarn(SDL_LOG_CATEGORY_SYSTEM, "Invalid format at: %s:%d",
-                  name.c_str(), idx);
+      _logger->warn("Invalid format at: {}:{}", name, idx);
     }
     idx++;
   }

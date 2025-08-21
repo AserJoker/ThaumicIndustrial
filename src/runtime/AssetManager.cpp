@@ -32,8 +32,7 @@ bool AssetManager::resolve(const std::string &source, Identity &output) {
 }
 bool AssetManager::initStore(const std::string &path) {
   if (!std::filesystem::is_directory(path)) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to init asset store: %s",
-                 path.c_str());
+    _logger->error("Failed to init asset store: {}", path);
     return false;
   }
   std::filesystem::path root = path;
@@ -67,8 +66,7 @@ bool AssetManager::initStore(const std::string &path) {
         }
       }
       if (!asset) {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to load asset: %s",
-                     current.string().c_str());
+        _logger->error("Failed to load asset: {}", current.string());
         continue;
       }
       std::vector<std::string> ns;

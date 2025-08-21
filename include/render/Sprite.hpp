@@ -1,6 +1,7 @@
 #pragma once
 #include "Image.hpp"
 #include "RenderObject.hpp"
+#include "runtime/Logger.hpp"
 #include <SDL3/SDL.h>
 #include <memory>
 
@@ -12,6 +13,7 @@ private:
   SDL_FlipMode _flipMode = SDL_FLIP_NONE;
   SDL_FPoint _rotateCenter = {0, 0};
   float _rotateAngle = .0f;
+  Logger *_logger = Logger::getLogger("Render");
 
 public:
   inline std::shared_ptr<Image> getImage() const { return _image; }

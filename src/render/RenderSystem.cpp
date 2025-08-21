@@ -30,8 +30,7 @@ std::shared_ptr<Image> RenderSystem::createImage(size_t width, size_t height,
   SDL_Texture *texture =
       SDL_CreateTexture(_renderer, format, access, width, height);
   if (!texture) {
-    SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to create texture: %s",
-                 SDL_GetError());
+    _logger->error("Failed to create texture: {}", SDL_GetError());
     return nullptr;
   }
   return std::make_shared<Image>(texture);
@@ -40,8 +39,7 @@ std::shared_ptr<Image> RenderSystem::createImage(size_t width, size_t height,
 std::shared_ptr<Image> RenderSystem::createImage(SDL_Surface *surface) {
   SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
   if (!texture) {
-    SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to create texture: %s",
-                 SDL_GetError());
+    _logger->error("Failed to create texture: {}", SDL_GetError());
     return nullptr;
   }
   return std::make_shared<Image>(texture);

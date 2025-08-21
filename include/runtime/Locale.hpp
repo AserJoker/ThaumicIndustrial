@@ -1,5 +1,6 @@
 #pragma once
 #include "core/Object.hpp"
+#include "runtime/Logger.hpp"
 #include <string>
 #include <unordered_map>
 class Locale : public Object {
@@ -9,10 +10,11 @@ private:
   std::string _lang;
   std::string _defaultLang;
   std::unordered_map<std::string, std::string> _languages;
+  Logger *_logger = Logger::getLogger("Locale");
 
 private:
-  static void resolve(std::unordered_map<std::string, std::string> &locale,
-                      const std::string &source, const std::string &name);
+  void resolve(std::unordered_map<std::string, std::string> &locale,
+               const std::string &source, const std::string &name);
 
 public:
   void setLang(const std::string &name);

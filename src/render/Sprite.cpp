@@ -11,8 +11,7 @@ void Sprite::draw(SDL_Renderer *renderer) const {
   if (!SDL_RenderTextureRotated(renderer, _image->getTexture(), &_clipRect,
                                 &_rect, _rotateAngle, &_rotateCenter,
                                 _flipMode)) {
-    SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to draw sprite: %s",
-                 SDL_GetError());
+    _logger->error("Failed to draw sprite: {}", SDL_GetError());
     return;
   }
 }
