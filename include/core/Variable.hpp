@@ -23,12 +23,12 @@ private:
 
 public:
   inline const Type &getType() const { return _type; };
-  void setNil();
-  void setNumber(float value = .0f);
-  void setString(const std::string &value = "");
-  void setBoolean(bool value = false);
-  void setArray();
-  void setObject();
+  Variable &setNil();
+  Variable &setNumber(float value = .0f);
+  Variable &setString(const std::string &value = "");
+  Variable &setBoolean(bool value = false);
+  Variable &setArray();
+  Variable &setObject();
   Number *getNumber();
   String *getString();
   Boolean *getBoolean();
@@ -39,4 +39,11 @@ public:
   const Boolean *getBoolean() const;
   const Array *getArray() const;
   const Object *getObject() const;
+  Variable &push(const Variable &value);
+  size_t getSize() const;
+  Variable &setField(const std::string &key, const Variable &value);
+  Variable *getField(const std::string &key);
+  const Variable *getField(const std::string &key) const;
+  Variable &removeField(const std::string &key);
+  bool hasField(const std::string &key) const;
 };

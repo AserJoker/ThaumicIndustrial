@@ -1,29 +1,35 @@
 #include "core/Variable.hpp"
 #include <any>
 
-void Variable::setNil() {
+Variable &Variable::setNil() {
   _type = Type::NIL;
   _value = nullptr;
+  return *this;
 }
-void Variable::setNumber(float value) {
+Variable &Variable::setNumber(float value) {
   _type = Type::NUMBER;
   _value = value;
+  return *this;
 }
-void Variable::setString(const std::string &value) {
+Variable &Variable::setString(const std::string &value) {
   _type = Type::STRING;
   _value = value;
+  return *this;
 }
-void Variable::setBoolean(bool value) {
+Variable &Variable::setBoolean(bool value) {
   _type = Type::BOOLEAN;
   _value = value;
+  return *this;
 }
-void Variable::setArray() {
+Variable &Variable::setArray() {
   _type = Type::ARRAY;
   _value = Array{};
+  return *this;
 }
-void Variable::setObject() {
+Variable &Variable::setObject() {
   _type = Type::OBJECT;
   _value = Object{};
+  return *this;
 }
 Variable::Number *Variable::getNumber() {
   if (_type == Type::NUMBER) {
@@ -85,4 +91,55 @@ const Variable::Object *Variable::getObject() const {
     return std::any_cast<Object>(&_value);
   }
   return nullptr;
+}
+Variable &Variable::push(const Variable &value) {
+  auto arr = getArray();
+  if (arr) {
+    arr->push_back(value);
+  }
+  return *this;
+}
+Variable &Variable::setField(const std::string &key, const Variable &value) {
+  auto obj = getObject();
+  if (obj) {
+    obj->insert({key, value});
+  }
+  return *this;
+}
+size_t Variable::getSize() const {
+  if (_type == Type::ARRAY) {
+    return getArray()->size();
+  }
+  if (_type == Type::OBJECT) {
+    return getObject()->size();
+  }
+  return 0;
+}
+Variable *Variable::getField(const std::string &key) {
+  auto obj = getObject();
+  if (obj && obj->contains(key)) {
+    return &obj->at(key);
+  }
+  return nullptr;
+}
+const Variable *Variable::getField(const std::string &key) const {
+  auto obj = getObject();
+  if (obj && obj->contains(key)) {
+    return &obj->at(key);
+  }
+  return nullptr;
+}
+Variable &Variable::removeField(const std::string &key) {
+  auto obj = getObject();
+  if (obj && obj->contains(key)) {
+    obj->erase(key);
+  }
+  return *this;
+}
+bool Variable::hasField(const std::string &key) const {
+  auto obj = getObject();
+  if (obj && obj->contains(key)) {
+    return true;
+  }
+  return false;
 }

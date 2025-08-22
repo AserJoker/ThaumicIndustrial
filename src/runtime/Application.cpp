@@ -286,9 +286,9 @@ int Application::run(int argc, char **argv) {
   }
   if (!_configManager->hasConfig("thaumicindustrial", "application")) {
     auto &cfg = _configManager->getConfig("thaumicindustrial", "application");
-    cfg.setObject();
-    auto &obj = *cfg.getObject();
-    obj["lang"].setString("en_US");
+    cfg.setObject().setField(
+        "system",
+        Variable{}.setObject().setField("lang", Variable{}.setString("en_US")));
     _configManager->saveConfig("thaumicindustrial", "application");
   }
   Sprite sprite;
