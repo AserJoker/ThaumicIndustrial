@@ -1,11 +1,12 @@
 #pragma once
 #include "AssetManager.hpp"
 #include "ConfigManager.hpp"
-#include "Locale.hpp"
+#include "LocaleManager.hpp"
 #include "SaveManager.hpp"
 #include "core/Object.hpp"
 #include "render/RenderSystem.hpp"
 #include "runtime/Logger.hpp"
+#include "runtime/ModManager.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <memory>
@@ -28,10 +29,11 @@ private:
   SDL_Window *_window = nullptr;
 
   std::unique_ptr<RenderSystem> _renderSystem;
-  std::unique_ptr<Locale> _locale;
+  std::unique_ptr<LocaleManager> _localeManager;
   std::unique_ptr<AssetManager> _assetManager;
   std::unique_ptr<ConfigManager> _configManager;
   std::unique_ptr<SaveManager> _saveManager;
+  std::unique_ptr<ModManager> _modManager;
 
 private:
   void resolveOptions(int argc, char **argv);
@@ -41,7 +43,8 @@ private:
   bool initRenderSystem();
   bool initConfigManager();
   bool initSaveManager();
-  bool initLocale();
+  bool initModManager();
+  bool initLocaleManager();
   void cleanup();
   bool processEvent();
 
@@ -74,7 +77,10 @@ public:
     return _configManager.get();
   }
   inline SaveManager *getSaveManager() const { return _saveManager.get(); }
-  inline Locale *getLocale() const { return _locale.get(); }
+  inline ModManager *getModManager() const { return _modManager.get(); }
+  inline LocaleManager *getLocaleManager() const {
+    return _localeManager.get();
+  }
 
 public:
   static Application *getInstance() {

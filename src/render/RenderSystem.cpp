@@ -1,10 +1,13 @@
 #include "render/RenderSystem.hpp"
+#include "render/Image.hpp"
+#include "runtime/Application.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_surface.h>
+#include <memory>
 RenderSystem::RenderSystem(SDL_Renderer *renderer) : _renderer(renderer) {
   SDL_SetRenderDrawColorFloat(_renderer, 0.2, 0.3, 0.3, 1.0);
 }
@@ -20,6 +23,22 @@ RenderSystem::~RenderSystem() {
 }
 void RenderSystem::draw(Fragment *fragment) {
   _fragements[fragment->getZIndex()].push_back(fragment);
+  if (!_textures.contains(fragment->getTexture())) {
+    auto app = Application::getInstance();
+    auto asset = app->getAssetManager()->query(fragment->getTexture());
+    auto image = std::dynamic_pointer_cast<Image>(asset);
+    if (image) {
+      SDL_Texture *texture =
+          createTexture(fragment->getTexture(), image->getSurface());
+      if (!texture) {
+        _logger->error("Failed to create texture '{}': {}",
+                       fragment->getTexture(), SDL_GetError());
+        _textures[fragment->getTexture()] = _textures["system.texture.missing"];
+      } else {
+        _textures[fragment->getTexture()] = texture;
+      }
+    }
+  }
 }
 
 void RenderSystem::present() {
@@ -29,14 +48,18 @@ void RenderSystem::present() {
   SDL_RenderClear(_renderer);
   for (auto &[_, fragments] : _fragements) {
     for (auto &fragment : fragments) {
-      SDL_Texture *texture = fragment->getTexture();
+      SDL_Texture *texture = nullptr;
+      auto &textureName = fragment->getTexture();
+      if (_textures.contains(textureName)) {
+        texture = _textures.at(textureName);
+      }
       if (!texture) {
         texture = _textures.at("system.texture.missing");
       }
-      SDL_RenderTextureRotated(
-          _renderer, fragment->getTexture(), &fragment->getClipRect(),
-          &fragment->getRect(), fragment->getRotateAngle(),
-          &fragment->getRotateCenter(), fragment->getFlipMode());
+      SDL_RenderTextureRotated(_renderer, texture, &fragment->getClipRect(),
+                               &fragment->getRect(), fragment->getRotateAngle(),
+                               &fragment->getRotateCenter(),
+                               fragment->getFlipMode());
     }
     fragments.clear();
   }

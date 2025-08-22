@@ -1,0 +1,8 @@
+{
+  "name": "i18n",
+  "version": "v1.0.0",
+  "description": "Internationalization support for Thaumic Industrial",
+  "author": "Thaumic Industrial Team",
+  "license": "MIT",
+  "locale": "i18n.locale.manifest"
+}

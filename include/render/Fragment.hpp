@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_surface.h>
+#include <string>
 class Fragment : public Object {
 private:
   SDL_FRect _rect = {};
@@ -10,8 +11,8 @@ private:
   SDL_FPoint _center = {};
   float _angle = 0.f;
   SDL_FlipMode _mode = SDL_FLIP_NONE;
-  SDL_Texture *_texture = nullptr;
   int32_t _zIndex = 0;
+  std::string _texture;
 
 public:
   inline const SDL_FRect &getRect() const { return _rect; }
@@ -26,8 +27,8 @@ public:
   inline void setFlipMode(SDL_FlipMode mode) { _mode = mode; }
   inline int32_t getZIndex() const { return _zIndex; }
   inline void setZIndex(int32_t zindex) { _zIndex = zindex; }
-  inline SDL_Texture *getTexture() const { return _texture; }
-  inline void setTexture(SDL_Texture *texture) { _texture = texture; }
+  inline const std::string &getTexture() const { return _texture; }
+  inline void setTexture(const std::string &texture) { _texture = texture; }
   inline void setPosition(const SDL_FPoint &position) {
     _rect.x = position.x;
     _rect.y = position.y;

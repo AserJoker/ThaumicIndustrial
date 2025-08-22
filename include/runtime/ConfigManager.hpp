@@ -9,7 +9,7 @@ private:
   std::string _configPath;
   std::unordered_map<std::string, std::unordered_map<std::string, Variable>>
       _configs;
-  Logger *_logger = Logger::getLogger("System");
+  Logger *_logger = Logger::getLogger("ConfigManager");
 
 private:
   void loadConfig(const std::string &ns, const std::string &name);

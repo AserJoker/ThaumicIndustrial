@@ -1,6 +1,7 @@
 #pragma once
 #include "Fragment.hpp"
 #include "core/Object.hpp"
+#include "render/RenderSystem.hpp"
 #include "runtime/Logger.hpp"
 #include <string>
 class Sprite : public Object {
@@ -13,7 +14,7 @@ private:
 public:
   void setImage(const std::string &image);
   const std::string &getImage() const { return _image; }
-  void draw();
+  void draw(RenderSystem *renderSystem);
   inline const SDL_FRect &getRect() const { return _fragment.getRect(); }
   inline void setRect(const SDL_FRect &rect) { _fragment.setRect(rect); }
   inline const SDL_FRect &getClipRect() const {

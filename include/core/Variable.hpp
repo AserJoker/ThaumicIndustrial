@@ -18,10 +18,11 @@ public:
   enum class Type { NIL, NUMBER, STRING, BOOLEAN, ARRAY, OBJECT };
 
 private:
-  Type _type = Type::NIL;
+  Type _type;
   std::any _value = nullptr;
 
 public:
+  Variable() : _type(Type::NIL) {}
   inline const Type &getType() const { return _type; };
   Variable &setNil();
   Variable &setNumber(float value = .0f);
@@ -34,16 +35,17 @@ public:
   Boolean *getBoolean();
   Array *getArray();
   Object *getObject();
-  const Number *getNumber() const;
-  const String *getString() const;
-  const Boolean *getBoolean() const;
-  const Array *getArray() const;
-  const Object *getObject() const;
+  Number getNumber(Number defaultValue = 0.f) const;
+  const String &getString(const String &defaultValue = "") const;
+  Boolean getBoolean(Boolean defaultValue = false) const;
+  const Array &getArray(const Array &defaultValue = {}) const;
+  const Object &getObject(const Object &defaultValue = {}) const;
   Variable &push(const Variable &value);
   size_t getSize() const;
   Variable &setField(const std::string &key, const Variable &value);
   Variable *getField(const std::string &key);
-  const Variable *getField(const std::string &key) const;
+  const Variable &getField(const std::string &key,
+                           const Variable &defaultValue = {}) const;
   Variable &removeField(const std::string &key);
   bool hasField(const std::string &key) const;
 };

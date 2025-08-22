@@ -29,6 +29,9 @@ bool AssetManager::initStore(const std::string &path) {
     return false;
   }
   std::filesystem::path root = path;
+  if (path.ends_with("/") || path.ends_with("\\")) {
+    root = path.substr(0, path.size() - 1);
+  }
   std::list<std::filesystem::path> workqueue = {root};
   while (!workqueue.empty()) {
     auto current = workqueue.back();

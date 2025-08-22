@@ -1,0 +1,13 @@
+{
+  "languages": [
+    {
+      "name": "English (US)",
+      "code": "en_US",
+      "supported": "full",
+      "description": "English (US) language support",
+      "author": "Thaumic Industrial Team",
+      "license": "MIT",
+      "asset": "thaumicindustrial.locale.en_US"
+    }
+  ]
+}

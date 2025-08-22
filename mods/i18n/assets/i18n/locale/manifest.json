@@ -1,0 +1,13 @@
+{
+  "languages": [
+    {
+      "name": "简体中文",
+      "code": "zh_CN",
+      "supported": "full",
+      "description": "简体中文语言支持",
+      "author": "Thaumic Industrial Team",
+      "license": "MIT",
+      "asset": "i18n.locale.zh_CN"
+    }
+  ]
+}

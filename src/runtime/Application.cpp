@@ -1,11 +1,10 @@
 #include "runtime/Application.hpp"
 #include "core/ScopeGuard.hpp"
-#include "core/Variable.hpp"
 #include "render/RenderSystem.hpp"
-#include "render/Sprite.hpp"
 #include "runtime/AssetManager.hpp"
 #include "runtime/ImageLoader.hpp"
-#include "runtime/Locale.hpp"
+#include "runtime/JsonLoader.hpp"
+#include "runtime/LocaleManager.hpp"
 #include "runtime/Logger.hpp"
 #include "runtime/SaveManager.hpp"
 #include <SDL3/SDL.h>
@@ -77,6 +76,8 @@ bool Application::initAssetManager() {
     _assetManager->registerLoader("bmp", imgLoader);
     _assetManager->registerLoader("jpeg", imgLoader);
     _assetManager->registerLoader("jpg", imgLoader);
+    auto jsonLoader = std::make_shared<JsonLoader>();
+    _assetManager->registerLoader("json", jsonLoader);
     if (!_assetManager->initStore(_cwd + "assets")) {
       _logger->error("Failed to load asset store: {}assets", _cwd);
     }
@@ -138,18 +139,29 @@ bool Application::initRenderSystem() {
   }
   return false;
 }
-bool Application::initLocale() {
+bool Application::initLocaleManager() {
   try {
-    _locale.reset(new Locale());
-    _locale->addLanguage("en_US", "English (US)");
-    _locale->addLanguage("zh_CN", "简体中文");
-    _locale->setDefaultLang("en_US");
-    _locale->setLang("en_US");
+    _localeManager.reset(new LocaleManager());
+    _localeManager->resolveManifest("thaumicindustrial.locale.manifest");
+    _localeManager->setDefaultLang("en_US");
+    _localeManager->setLang("en_US");
     return true;
   } catch (std::exception &e) {
     _logger->error("Failed to create locale: {}", e.what());
   } catch (...) {
     _logger->error("Failed to create locale: unknown exception");
+  }
+  return false;
+}
+bool Application::initModManager() {
+  try {
+    _modManager.reset(new ModManager());
+    _modManager->loadAllMod();
+    return true;
+  } catch (std::exception &e) {
+    _logger->error("Failed to create mod manager: {}", e.what());
+  } catch (...) {
+    _logger->error("Failed to create mod manager: unknown exception");
   }
   return false;
 }
@@ -216,8 +228,19 @@ bool Application::processEvent() {
 void Application::onPreInitialize() {}
 void Application::onInitialize() {
   _logger->debug("Support languages:");
-  for (auto &[key, name] : _locale->getLanguages()) {
-    _logger->debug("  key: {}, name: {}", key.c_str(), name.c_str());
+  for (auto &[code, locales] : _localeManager->getLanguages()) {
+    _logger->debug("  code: {}", code.c_str());
+    for (auto &locale : locales) {
+      _logger->debug("    =============================================\n");
+      _logger->debug("    name: {}\n", locale.name.c_str());
+      _logger->debug("    description: {}\n", locale.description.c_str());
+      _logger->debug("    version: {}\n", locale.version.c_str());
+      _logger->debug("    author: {}\n", locale.author.c_str());
+      _logger->debug("    license: {}\n", locale.license.c_str());
+      _logger->debug("    supported: {}\n", locale.supported.c_str());
+      _logger->debug("    asset: {}\n", locale.asset.c_str());
+      _logger->debug("    mod: {}\n", locale.mod.c_str());
+    }
   }
 }
 void Application::onPostInitialize() {}
@@ -281,23 +304,16 @@ int Application::run(int argc, char **argv) {
   if (!initRenderSystem()) {
     return -1;
   }
-  if (!initLocale()) {
+  if (!initLocaleManager()) {
     return -1;
   }
-  if (!_configManager->hasConfig("thaumicindustrial", "application")) {
-    auto &cfg = _configManager->getConfig("thaumicindustrial", "application");
-    cfg.setObject().setField(
-        "system",
-        Variable{}.setObject().setField("lang", Variable{}.setString("en_US")));
-    _configManager->saveConfig("thaumicindustrial", "application");
+  if (!initModManager()) {
+    return -1;
   }
-  Sprite sprite;
-  sprite.setImage("thaumicindustrial.texture.sword");
   onPreInitialize();
   onInitialize();
   onPostInitialize();
   while (_running) {
-    sprite.draw();
     onUpdate();
   }
   onUninitialize();

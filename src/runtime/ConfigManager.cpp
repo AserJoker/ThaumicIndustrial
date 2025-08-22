@@ -37,17 +37,17 @@ static void resolveToml(Variable &variable, toml::node &node) {
 }
 void writeToObject(const Variable &variable, toml::table &table);
 void writeToArray(const Variable &variable, toml::array &array) {
-  auto &arr = *variable.getArray();
+  auto &arr = variable.getArray();
   for (auto &value : arr) {
     switch (value.getType()) {
     case Variable::Type::NUMBER:
-      array.push_back(*value.getNumber());
+      array.push_back(value.getNumber());
       break;
     case Variable::Type::STRING:
-      array.push_back(*value.getString());
+      array.push_back(value.getString());
       break;
     case Variable::Type::BOOLEAN:
-      array.push_back(*value.getBoolean());
+      array.push_back(value.getBoolean());
       break;
     case Variable::Type::ARRAY: {
       toml::array arr;
@@ -66,17 +66,17 @@ void writeToArray(const Variable &variable, toml::array &array) {
   }
 }
 void writeToObject(const Variable &variable, toml::table &table) {
-  auto &object = *variable.getObject();
+  auto &object = variable.getObject();
   for (auto &[key, value] : object) {
     switch (value.getType()) {
     case Variable::Type::NUMBER:
-      table.insert(key, *value.getNumber());
+      table.insert(key, value.getNumber());
       break;
     case Variable::Type::STRING:
-      table.insert(key, *value.getString());
+      table.insert(key, value.getString());
       break;
     case Variable::Type::BOOLEAN:
-      table.insert(key, *value.getBoolean());
+      table.insert(key, value.getBoolean());
       break;
     case Variable::Type::ARRAY: {
       toml::array arr;

@@ -62,35 +62,35 @@ Variable::Object *Variable::getObject() {
   return nullptr;
 }
 
-const Variable::Number *Variable::getNumber() const {
+Variable::Number Variable::getNumber(Number defaultValue) const {
   if (_type == Type::NUMBER) {
-    return std::any_cast<Number>(&_value);
+    return std::any_cast<Number>(_value);
   }
-  return nullptr;
+  return defaultValue;
 }
-const Variable::String *Variable::getString() const {
+const Variable::String &Variable::getString(const String &defaultValue) const {
   if (_type == Type::STRING) {
-    return std::any_cast<String>(&_value);
+    return std::any_cast<const String &>(_value);
   }
-  return nullptr;
+  return defaultValue;
 }
-const Variable::Boolean *Variable::getBoolean() const {
+Variable::Boolean Variable::getBoolean(Boolean defaultValue) const {
   if (_type == Type::BOOLEAN) {
-    return std::any_cast<Boolean>(&_value);
+    return std::any_cast<Boolean>(_value);
   }
-  return nullptr;
+  return defaultValue;
 }
-const Variable::Array *Variable::getArray() const {
+const Variable::Array &Variable::getArray(const Array &defaultValue) const {
   if (_type == Type::ARRAY) {
-    return std::any_cast<Array>(&_value);
+    return std::any_cast<const Array &>(_value);
   }
-  return nullptr;
+  return defaultValue;
 }
-const Variable::Object *Variable::getObject() const {
+const Variable::Object &Variable::getObject(const Object &defaultValue) const {
   if (_type == Type::OBJECT) {
-    return std::any_cast<Object>(&_value);
+    return std::any_cast<const Object &>(_value);
   }
-  return nullptr;
+  return defaultValue;
 }
 Variable &Variable::push(const Variable &value) {
   auto arr = getArray();
@@ -108,10 +108,10 @@ Variable &Variable::setField(const std::string &key, const Variable &value) {
 }
 size_t Variable::getSize() const {
   if (_type == Type::ARRAY) {
-    return getArray()->size();
+    return getArray().size();
   }
   if (_type == Type::OBJECT) {
-    return getObject()->size();
+    return getObject().size();
   }
   return 0;
 }
@@ -122,12 +122,16 @@ Variable *Variable::getField(const std::string &key) {
   }
   return nullptr;
 }
-const Variable *Variable::getField(const std::string &key) const {
-  auto obj = getObject();
-  if (obj && obj->contains(key)) {
-    return &obj->at(key);
+const Variable &Variable::getField(const std::string &key,
+                                   const Variable &defaultValue) const {
+  if (_type != Variable::Type::OBJECT) {
+    return defaultValue;
   }
-  return nullptr;
+  auto &obj = getObject();
+  if (obj.contains(key)) {
+    return obj.at(key);
+  }
+  return defaultValue;
 }
 Variable &Variable::removeField(const std::string &key) {
   auto obj = getObject();
@@ -137,8 +141,11 @@ Variable &Variable::removeField(const std::string &key) {
   return *this;
 }
 bool Variable::hasField(const std::string &key) const {
-  auto obj = getObject();
-  if (obj && obj->contains(key)) {
+  if (_type != Variable::Type::OBJECT) {
+    return false;
+  }
+  auto &obj = getObject();
+  if (obj.contains(key)) {
     return true;
   }
   return false;
