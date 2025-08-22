@@ -81,14 +81,24 @@ void Locale::setDefaultLang(const std::string &name) {
   }
 }
 
-const std::string &Locale::i18n(const std::string &key) const {
+std::string Locale::i18n(
+    const std::string &key,
+    const std::unordered_map<std::string, std::string> &options) const {
+  auto result = key;
   if (_locales.contains(key)) {
-    return _locales.at(key);
+    result = _locales.at(key);
+  } else if (_defaultLocales.contains(key)) {
+    result = _defaultLocales.at(key);
   }
-  if (_defaultLocales.contains(key)) {
-    return _defaultLocales.at(key);
+  for (auto &[key, value] : options) {
+    auto keystr = "{" + key + "}";
+    size_t pos = 0;
+    while ((pos = result.find(keystr)) != std::string::npos) {
+      result.replace(pos, keystr.length(), value);
+      pos += value.length();
+    }
   }
-  return key;
+  return result;
 }
 
 void Locale::addLanguage(const std::string &key, const std::string &name) {

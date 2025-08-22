@@ -21,7 +21,9 @@ public:
   void setDefaultLang(const std::string &name);
   inline const std::string &getLang() const { return _lang; };
   inline const std::string &getDefaultLang() const { return _defaultLang; }
-  const std::string &i18n(const std::string &key) const;
+  std::string
+  i18n(const std::string &key,
+       const std::unordered_map<std::string, std::string> &options = {}) const;
   void addLanguage(const std::string &key, const std::string &name);
   void removeLanguage(const std::string &key);
   bool hasLanguage(const std::string &key) const;
