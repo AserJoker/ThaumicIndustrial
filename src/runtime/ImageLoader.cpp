@@ -1,6 +1,6 @@
 #include "runtime/ImageLoader.hpp"
 #include "core/Object.hpp"
-#include "runtime/Application.hpp"
+#include "render/Image.hpp"
 #include <SDL3_image/SDL_image.h>
 #include <memory>
 std::shared_ptr<Object> ImageLoader::load(const std::string &path) {
@@ -8,8 +8,5 @@ std::shared_ptr<Object> ImageLoader::load(const std::string &path) {
   if (!surface) {
     return nullptr;
   }
-  auto app = Application::getInstance();
-  auto img = app->getRenderSystem()->createImage(surface);
-  SDL_DestroySurface(surface);
-  return std::shared_ptr<Object>(img);
+  return std::make_shared<Image>(surface);
 }

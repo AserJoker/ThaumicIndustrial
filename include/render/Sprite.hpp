@@ -1,53 +1,46 @@
 #pragma once
-#include "Image.hpp"
-#include "RenderObject.hpp"
+#include "Fragment.hpp"
+#include "core/Object.hpp"
 #include "runtime/Logger.hpp"
-#include <SDL3/SDL.h>
-#include <memory>
-
-class Sprite : public RenderObject {
+#include <string>
+class Sprite : public Object {
 private:
-  std::shared_ptr<Image> _image = nullptr;
-  SDL_FRect _rect = {0, 0, 0, 0};
-  SDL_FRect _clipRect = {0, 0, 0, 0};
-  SDL_FlipMode _flipMode = SDL_FLIP_NONE;
-  SDL_FPoint _rotateCenter = {0, 0};
-  float _rotateAngle = .0f;
+  Fragment _fragment;
+  std::string _image;
+
   Logger *_logger = Logger::getLogger("Render");
 
 public:
-  inline std::shared_ptr<Image> getImage() const { return _image; }
-  inline const SDL_FRect &getRect() const { return _rect; }
-  inline const SDL_FRect &getClipRect() const { return _clipRect; }
-  inline SDL_FlipMode getFlipMode() const { return _flipMode; }
-  inline const SDL_FPoint &getRotateCenter() const { return _rotateCenter; };
-  inline float getRotateAngle() const { return _rotateAngle; }
-
-  inline void setImage(const std::shared_ptr<Image> &image) {
-    _image = image;
-    setImageRect();
-    setImageClipRect();
+  void setImage(const std::string &image);
+  const std::string &getImage() const { return _image; }
+  void draw();
+  inline const SDL_FRect &getRect() const { return _fragment.getRect(); }
+  inline void setRect(const SDL_FRect &rect) { _fragment.setRect(rect); }
+  inline const SDL_FRect &getClipRect() const {
+    return _fragment.getClipRect();
   }
-  inline void setRect(const SDL_FRect &rect) { _rect = rect; }
-  inline void setClipRect(const SDL_FRect &rect) { _clipRect = rect; }
-  inline void setFlipMode(SDL_FlipMode flipMode) { _flipMode = flipMode; }
-  inline void setRotateCenter(const SDL_FPoint &center) {
-    _rotateCenter = center;
+  inline void setClipRect(const SDL_FRect &clipRect) {
+    _fragment.setClipRect(clipRect);
   }
-  inline void setRotateAngle(float angle) { _rotateAngle = angle; }
-  inline void setRotate(const SDL_FPoint &center, float angle) {
-    _rotateCenter = center;
-    _rotateAngle = angle;
+  inline const SDL_FPoint &getRotateCenter() const {
+    return _fragment.getRotateCenter();
   }
+  inline void setRotateCeneter(const SDL_FPoint &center) {
+    _fragment.setRotateCeneter(center);
+  }
+  inline float getRotateAngle() const { return _fragment.getRotateAngle(); }
+  inline void setRotateAngle(float angle) { _fragment.setRotateAngle(angle); }
+  inline SDL_FlipMode getFlipMode() const { return _fragment.getFlipMode(); }
+  inline void setFlipMode(SDL_FlipMode mode) { _fragment.setFlipMode(mode); }
+  inline int32_t getZIndex() const { return _fragment.getZIndex(); }
+  inline void setZIndex(int32_t zindex) { _fragment.setZIndex(zindex); }
   inline void setPosition(const SDL_FPoint &position) {
-    _rect.x = position.x;
-    _rect.y = position.y;
+    _fragment.setPosition(position);
   }
   inline void setClipPosition(const SDL_FPoint &position) {
-    _clipRect.x = position.x;
-    _clipRect.y = position.y;
+    _fragment.setClipPosition(position);
   }
-  void draw(SDL_Renderer *renderer) const override;
-  void setImageRect();
-  void setImageClipRect();
+  inline void setRotate(const SDL_FPoint &center, float angle) {
+    _fragment.setRotate(center, angle);
+  }
 };

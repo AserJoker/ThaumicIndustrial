@@ -1,6 +1,8 @@
 #pragma once
 #include "AssetManager.hpp"
+#include "ConfigManager.hpp"
 #include "Locale.hpp"
+#include "SaveManager.hpp"
 #include "core/Object.hpp"
 #include "render/RenderSystem.hpp"
 #include "runtime/Logger.hpp"
@@ -17,15 +19,19 @@ private:
   static std::unique_ptr<Application> _instance;
 
 private:
-  std::unordered_map<std::string, std::string> _options;
-  std::unordered_map<int, std::string> _logCategoryNames;
-  SDL_Window *_window = nullptr;
-  AssetManager *_assetManager = nullptr;
-  RenderSystem *_renderSystem = nullptr;
-  Locale *_locale = nullptr;
-  bool _running = true;
-  std::string _cwd;
   Logger *_logger = Logger::getLogger("Application");
+
+  std::string _cwd;
+  std::unordered_map<std::string, std::string> _options;
+
+  bool _running = true;
+  SDL_Window *_window = nullptr;
+
+  std::unique_ptr<RenderSystem> _renderSystem;
+  std::unique_ptr<Locale> _locale;
+  std::unique_ptr<AssetManager> _assetManager;
+  std::unique_ptr<ConfigManager> _configManager;
+  std::unique_ptr<SaveManager> _saveManager;
 
 private:
   void resolveOptions(int argc, char **argv);
@@ -33,6 +39,8 @@ private:
   bool createWindow();
   bool initAssetManager();
   bool initRenderSystem();
+  bool initConfigManager();
+  bool initSaveManager();
   bool initLocale();
   void cleanup();
   bool processEvent();
@@ -60,9 +68,13 @@ public:
   void exit();
   inline SDL_Window *getWindow() const { return _window; }
   const std::string &getCWD() const { return _cwd; }
-  inline RenderSystem *getRenderSystem() const { return _renderSystem; }
-  inline AssetManager *getAssetManager() const { return _assetManager; }
-  inline Locale *getLocale() const { return _locale; }
+  inline RenderSystem *getRenderSystem() const { return _renderSystem.get(); }
+  inline AssetManager *getAssetManager() const { return _assetManager.get(); }
+  inline ConfigManager *getConfigManager() const {
+    return _configManager.get();
+  }
+  inline SaveManager *getSaveManager() const { return _saveManager.get(); }
+  inline Locale *getLocale() const { return _locale.get(); }
 
 public:
   static Application *getInstance() {

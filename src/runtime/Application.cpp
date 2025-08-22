@@ -1,14 +1,19 @@
 #include "runtime/Application.hpp"
 #include "core/ScopeGuard.hpp"
+#include "core/Variable.hpp"
 #include "render/RenderSystem.hpp"
+#include "render/Sprite.hpp"
 #include "runtime/AssetManager.hpp"
 #include "runtime/ImageLoader.hpp"
 #include "runtime/Locale.hpp"
 #include "runtime/Logger.hpp"
+#include "runtime/SaveManager.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <exception>
@@ -67,16 +72,42 @@ bool Application::createWindow() {
 bool Application::initAssetManager() {
   try {
     auto imgLoader = std::make_shared<ImageLoader>();
-    _assetManager = new AssetManager();
+    _assetManager.reset(new AssetManager());
     _assetManager->registerLoader("png", imgLoader);
     _assetManager->registerLoader("bmp", imgLoader);
     _assetManager->registerLoader("jpeg", imgLoader);
     _assetManager->registerLoader("jpg", imgLoader);
+    if (!_assetManager->initStore(_cwd + "assets")) {
+      _logger->error("Failed to load asset store: {}assets", _cwd);
+    }
     return true;
   } catch (std::exception &e) {
     _logger->error("Failed to create asset manager: {}", SDL_GetError());
   } catch (...) {
     _logger->error("Failed to create asset manager: unknown exception");
+  }
+  return false;
+}
+bool Application::initConfigManager() {
+  try {
+    _configManager.reset(new ConfigManager());
+    return true;
+  } catch (std::exception &e) {
+    _logger->error("Failed to create config manager: {}", SDL_GetError());
+  } catch (...) {
+    _logger->error("Failed to create config manager: unknown exception");
+  }
+  return false;
+}
+
+bool Application::initSaveManager() {
+  try {
+    _saveManager.reset(new SaveManager());
+    return true;
+  } catch (std::exception &e) {
+    _logger->error("Failed to create save manager: {}", SDL_GetError());
+  } catch (...) {
+    _logger->error("Failed to create save manager: unknown exception");
   }
   return false;
 }
@@ -90,7 +121,15 @@ bool Application::initRenderSystem() {
     }
     _logger->debug("Create renderer successful with device: {}",
                    SDL_GetRendererName(renderer));
-    _renderSystem = new RenderSystem(renderer);
+    _renderSystem.reset(new RenderSystem(renderer));
+    SDL_Texture *texture =
+        _renderSystem->createTexture("system.texture.missing", 2, 2);
+    if (!texture) {
+      return false;
+    }
+    uint32_t data[] = {0xff000000, 0xffffffff, 0xffffffff, 0xff000000};
+    SDL_UpdateTexture(texture, nullptr, data, 2 * sizeof(uint32_t));
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
     return true;
   } catch (std::exception &e) {
     _logger->error("Failed to create render system: {}", SDL_GetError());
@@ -101,7 +140,7 @@ bool Application::initRenderSystem() {
 }
 bool Application::initLocale() {
   try {
-    _locale = new Locale();
+    _locale.reset(new Locale());
     _locale->addLanguage("en_US", "English (US)");
     _locale->addLanguage("zh_CN", "简体中文");
     _locale->setDefaultLang("en_US");
@@ -116,17 +155,8 @@ bool Application::initLocale() {
 }
 
 void Application::cleanup() {
-  if (_locale) {
-    delete _locale;
-    _locale = nullptr;
-  }
-  if (_assetManager) {
-    delete _assetManager;
-    _assetManager = nullptr;
-  }
   if (_renderSystem) {
-    delete _renderSystem;
-    _renderSystem = nullptr;
+    _renderSystem.reset(nullptr);
   }
   if (_window) {
     SDL_DestroyWindow(_window);
@@ -236,6 +266,12 @@ int Application::run(int argc, char **argv) {
   for (auto &[option, value] : _options) {
     _logger->debug("Option: {} = {}", option, value);
   }
+  if (!initConfigManager()) {
+    return -1;
+  }
+  if (!initSaveManager()) {
+    return -1;
+  }
   if (!initAssetManager()) {
     return -1;
   }
@@ -245,16 +281,23 @@ int Application::run(int argc, char **argv) {
   if (!initRenderSystem()) {
     return -1;
   }
-  if (!_assetManager->initStore(_cwd + "assets")) {
-    _logger->error("Failed to load asset store: {}assets", _cwd);
-  }
   if (!initLocale()) {
     return -1;
   }
+  if (!_configManager->hasConfig("thaumicindustrial", "application")) {
+    auto &cfg = _configManager->getConfig("thaumicindustrial", "application");
+    cfg.setObject();
+    auto &obj = *cfg.getObject();
+    obj["lang"].setString("en_US");
+    _configManager->saveConfig("thaumicindustrial", "application");
+  }
+  Sprite sprite;
+  sprite.setImage("thaumicindustrial.texture.sword");
   onPreInitialize();
   onInitialize();
   onPostInitialize();
   while (_running) {
+    sprite.draw();
     onUpdate();
   }
   onUninitialize();

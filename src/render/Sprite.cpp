@@ -1,31 +1,33 @@
 #include "render/Sprite.hpp"
-#include <SDL3/SDL_log.h>
-#include <SDL3/SDL_render.h>
-void Sprite::draw(SDL_Renderer *renderer) const {
-  if (!_image || !_image->getTexture()) {
-    return;
-  }
-  if (!isVisible()) {
-    return;
-  }
-  if (!SDL_RenderTextureRotated(renderer, _image->getTexture(), &_clipRect,
-                                &_rect, _rotateAngle, &_rotateCenter,
-                                _flipMode)) {
-    _logger->error("Failed to draw sprite: {}", SDL_GetError());
-    return;
+#include "render/Image.hpp"
+#include "runtime/Application.hpp"
+#include <SDL3/SDL.h>
+#include <memory>
+void Sprite::setImage(const std::string &name) {
+  auto app = Application::getInstance();
+  if (_image != name) {
+    _image = name;
+    SDL_Texture *texture = app->getRenderSystem()->getTexture(name);
+    if (!texture) {
+      auto asset = app->getAssetManager()->query(name);
+      auto image = std::dynamic_pointer_cast<Image>(asset);
+      if (image) {
+        texture =
+            app->getRenderSystem()->createTexture(name, image->getSurface());
+      } else {
+        _logger->error("Missing texture: {}", name);
+      }
+    }
+    _fragment.setTexture(texture);
+    if (texture) {
+      _fragment.setRect({0, 0, static_cast<float>(texture->w),
+                         static_cast<float>(texture->h)});
+      _fragment.setClipRect({0, 0, static_cast<float>(texture->w),
+                             static_cast<float>(texture->h)});
+    }
   }
 }
-void Sprite::setImageRect() {
-  if (!_image || !_image->getTexture()) {
-    return;
-  }
-  _rect.w = static_cast<float>(_image->getTexture()->w);
-  _rect.h = static_cast<float>(_image->getTexture()->h);
-}
-void Sprite::setImageClipRect() {
-  if (!_image || !_image->getTexture()) {
-    return;
-  }
-  _clipRect.w = static_cast<float>(_image->getTexture()->w);
-  _clipRect.h = static_cast<float>(_image->getTexture()->h);
+void Sprite::draw() {
+  auto app = Application::getInstance();
+  app->getRenderSystem()->draw(&_fragment);
 }

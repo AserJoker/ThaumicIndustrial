@@ -7,16 +7,9 @@
 #include <list>
 #include <memory>
 #include <vector>
-
 bool AssetManager::resolve(const std::string &source, Identity &output) {
-  auto typeEnd = source.find_first_of(':');
-  if (typeEnd == std::string::npos) {
-    return false;
-  }
-  output.type = source.substr(0, typeEnd);
   std::string part;
-  auto nsAndName = source.substr(typeEnd + 1);
-  for (auto &ch : nsAndName) {
+  for (auto &ch : source) {
     if (ch == '.') {
       output.ns.push_back(part);
       part.clear();
@@ -76,7 +69,7 @@ bool AssetManager::initStore(const std::string &path) {
         current = current.parent_path();
       }
       std::reverse(ns.begin(), ns.end());
-      if (!store(type, ns, name, asset)) {
+      if (!store(ns, name, asset)) {
         return false;
       }
     }
@@ -89,14 +82,13 @@ void AssetManager::registerLoader(const std::string &type,
   _loaders[type] = loader;
 }
 
-bool AssetManager::store(const std::string &type,
-                         const std::vector<std::string> &ns,
+bool AssetManager::store(const std::vector<std::string> &ns,
                          const std::string &name,
                          const std::shared_ptr<Object> asset) {
   if (!asset) {
     return false;
   }
-  auto node = &_assets[type];
+  Node *node = &_root;
   for (auto &part : ns) {
     node = &node->children[part];
   }
@@ -112,16 +104,13 @@ bool AssetManager::store(const std::string &fullname,
   if (!resolve(fullname, id)) {
     return false;
   }
-  return store(id.type, id.ns, id.name, asset);
+  return store(id.ns, id.name, asset);
 }
 
 const std::shared_ptr<Object> &
-AssetManager::query(const std::string &type, const std::vector<std::string> &ns,
+AssetManager::query(const std::vector<std::string> &ns,
                     const std::string &name) const {
-  if (!_assets.contains(type)) {
-    return _notfound;
-  }
-  auto node = &_assets.at(type);
+  auto node = &_root;
   for (auto &part : ns) {
     if (!node->children.contains(part)) {
       return _notfound;
@@ -140,6 +129,9 @@ AssetManager::query(const std::string &fullname) const {
   if (!resolve(fullname, id)) {
     return _notfound;
   }
-  return query(id.type, id.ns, id.name);
+  return query(id.ns, id.name);
 }
-void AssetManager::reset() { _assets.clear(); }
+void AssetManager::reset() {
+  _root.assets.clear();
+  _root.children.clear();
+}

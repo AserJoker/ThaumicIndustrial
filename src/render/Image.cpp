@@ -1,20 +1,22 @@
 #include "render/Image.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_properties.h>
-#include <SDL3/SDL_render.h>
-Image::Image(SDL_Texture *texture) : _texture(texture) {}
+Image::Image(SDL_Surface *surface) : _surface(surface) {}
+
+Image::Image(uint32_t w, uint32_t h, SDL_PixelFormat format, void *data) {
+  _surface = SDL_CreateSurface(w, h, format);
+  memcpy(_surface->pixels, data, _surface->pitch * h);
+}
 
 Image::~Image() {
-  if (_texture) {
-    SDL_DestroyTexture(_texture);
-    _texture = nullptr;
+  if (_surface) {
+    SDL_DestroySurface(_surface);
+    _surface = nullptr;
   }
 }
 
-void Image::setTexture(SDL_Texture *texture) {
-  if (_texture) {
-    SDL_DestroyTexture(_texture);
-    _texture = nullptr;
+void Image::setSurface(SDL_Surface *surface) {
+  if (_surface) {
+    SDL_DestroySurface(_surface);
   }
-  _texture = texture;
+  _surface = surface;
 }
